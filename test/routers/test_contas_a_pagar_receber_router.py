@@ -93,3 +93,24 @@ def test_deve_retornar_erro_pagar_receber():
         'tipo': 'A PAGAR'
     })
     assert response.status_code == 422
+
+def test_update_contas_pagar_receber():
+        # Dropando bases anteriores e criando nova base de testes
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+
+    response = client.post('/contas-a-pagar-e-receber/criar-conta', json={
+        'descricao': 'Curso de Python', 
+        'valor': 333.90, 
+        'tipo': 'PAGAR'
+    })
+
+    id_conta = response.json()['id']
+
+    response_put = client.put(f'/contas-a-pagar-e-receber/atualiza-conta/{id_conta}', json={
+        'descricao': 'Curso de Python', 
+        'valor': 335.90, 
+        'tipo': 'PAGAR'
+    })
+
+    assert response_put.status_code == 200
