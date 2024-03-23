@@ -39,8 +39,6 @@ def listar_conta(
         db: Session = Depends(get_db)) -> ContasPagarReceberResponse:
     
     conta_result : ContaPagarReceberModel = db.query(ContaPagarReceberModel).get(id_conta)
-    if conta_result.descricao == None:
-        raise HTTPException(status_code=404, detail="Conta não encontrada")
     
     return conta_result
 
@@ -84,3 +82,13 @@ def atualizar_conta(
     db.refresh(conta_atualizar)
 
     return conta_atualizar
+
+@router.delete('/deleta-conta/{id_conta}', status_code=204)
+def atualizar_conta(
+        id_conta: int,
+        db: Session = Depends(get_db)) -> None:
+    
+    conta_deletar = db.query(ContaPagarReceberModel).get(id_conta)
+    
+    db.delete(conta_deletar)
+    db.commit()
