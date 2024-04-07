@@ -1,10 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from app.routers import contas_a_pagar_receber_router
-#from app.shared.database import engine, Base
-#from app.models.contas_a_pagar_receber_model import ContaPagarReceberModel
-
-#Base.metadata.drop_all(bind=engine)
-#Base.metadata.create_all(bind=engine)
+from app.shared.exception_handler import notfound_exception_handler
+from app.shared.exceptions import NotFound
 
 app = FastAPI()
 
@@ -13,4 +10,4 @@ def hello_world():
     return 'Hello from FasAPI'
 
 app.include_router(contas_a_pagar_receber_router.router)
-
+app.add_exception_handler(NotFound, notfound_exception_handler)

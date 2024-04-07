@@ -5,6 +5,7 @@ from decouple import config
 from sqlalchemy.orm import sessionmaker
 from app.shared.database import Base
 from app.shared.dependencies import get_db
+from app.shared.exceptions import NotFound
 
 client = TestClient(app)
 
@@ -21,7 +22,10 @@ def override_get_db():
     try:
         yield db
     except Exception as ex:
-        raise Exception(ex)
+        if isinstance(ex, NotFound):
+            raise  
+        else:
+            raise ex
     finally:
         db.close()
 
@@ -165,6 +169,45 @@ def test_remover_contas_pagar_receber():
 
     id_conta = response.json()['id']
 
-    response_put = client.delete(f'/contas-a-pagar-e-receber/deleta-conta/{id_conta}')
+    response_delete = client.delete(f'/contas-a-pagar-e-receber/deleta-conta/{id_conta}')
 
-    assert response_put.status_code == 204
+    assert response_delete.status_code == 204
+
+####### TESTE PEGAR ID INEXISTENTE NA ROTA DE LISTAR CONTAS
+
+def test_pegar_por_id_notfound():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+
+    response_get = client.get(f'/contas-a-pagar-e-receber/listar-conta/100')
+    print(response_get.status_code)
+
+    assert response_get.status_code == 404
+
+
+####### TESTE PEGAR ID INEXISTENTE AO ATUALIZAR CONTA
+
+def test_update_contas_pagar_receber_notfound():
+        # Dropando bases anteriores e criando nova base de testes
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+
+    response_put = client.put(f'/contas-a-pagar-e-receber/atualiza-conta/100', json={
+        'descricao': 'Curso de Python', 
+        'valor': 111, 
+        'tipo': 'PAGAR'
+    })
+
+    assert response_put.status_code == 404
+
+
+######## TESTE DELETE DE CONTA COM ID INEXISTENTE
+
+def test_remover_contas_pagar_receber():
+        # Dropando bases anteriores e criando nova base de testes
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+
+    response = client.delete(f'/contas-a-pagar-e-receber/deleta-conta/100')
+
+    assert response.status_code == 404

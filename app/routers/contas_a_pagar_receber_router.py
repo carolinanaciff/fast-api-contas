@@ -5,6 +5,7 @@ from typing import List
 from sqlalchemy.orm import Session
 from app.models.contas_a_pagar_receber_model import ContaPagarReceberModel
 from app.shared.dependencies import get_db
+from app.shared.exceptions import NotFound
 
 router = APIRouter(prefix='/contas-a-pagar-e-receber')
 
@@ -38,8 +39,11 @@ def listar_conta(
         id_conta: int,
         db: Session = Depends(get_db)) -> ContasPagarReceberResponse:
     
-    conta_result : ContaPagarReceberModel = db.query(ContaPagarReceberModel).get(id_conta)
+    conta_result = buscar_conta_por_id(id_conta, db)
     
+    if conta_result is None:
+        raise NotFound(f'conta com id {id_conta}')
+
     return conta_result
 
 
@@ -71,7 +75,7 @@ def atualizar_conta(
         conta_atualizar_request: ContasPagarReceberRequest, 
         db: Session = Depends(get_db)) -> ContasPagarReceberResponse:
     
-    conta_atualizar : ContaPagarReceberModel = db.query(ContaPagarReceberModel).get(id_conta)
+    conta_atualizar = buscar_conta_por_id(id_conta, db)
 
     conta_atualizar.descricao = conta_atualizar_request.descricao
     conta_atualizar.valor = conta_atualizar_request.valor
@@ -88,7 +92,16 @@ def atualizar_conta(
         id_conta: int,
         db: Session = Depends(get_db)) -> None:
     
-    conta_deletar = db.query(ContaPagarReceberModel).get(id_conta)
+    conta_deletar = buscar_conta_por_id(id_conta, db)
     
     db.delete(conta_deletar)
     db.commit()
+
+
+def buscar_conta_por_id(id_conta: int, db: Session) -> ContaPagarReceberModel:
+    conta = db.query(ContaPagarReceberModel).get(id_conta)
+
+    if conta is None:
+        raise NotFound(f'conta com id {id_conta}')
+    
+    return conta 
